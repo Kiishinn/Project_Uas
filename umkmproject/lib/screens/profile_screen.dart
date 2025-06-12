@@ -21,7 +21,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isEditing = false;
   bool _isLoading = false;
   String _imageBase64 = '';
-  String _originalImageBase64 = '';  // Untuk menyimpan gambar asli
+  String _originalImageBase64 = ''; // To store the original image
   File? _imageFile;
 
   @override
@@ -40,7 +40,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _emailController.text = userData?['email'] ?? '';
         _phoneController.text = userData?['phone'] ?? '';
         _imageBase64 = userData?['image_base64'] ?? '';
-        _originalImageBase64 = _imageBase64;  // Menyimpan gambar asli
+        _originalImageBase64 = _imageBase64; // Store the original image
       });
     }
   }
@@ -49,7 +49,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
-        _imageFile = File(pickedFile.path);  // Menyimpan file yang dipilih
+        _imageFile = File(pickedFile.path); // Save the selected file
       });
       await _compressAndEncodeImage();
     }
@@ -71,7 +71,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     setState(() {
-      _imageBase64 = base64Encode(jpg);  // Menyimpan gambar sebagai Base64 untuk simpan ke Firebase
+      _imageBase64 = base64Encode(jpg); // Store the image as Base64 for Firebase
     });
   }
 
@@ -91,7 +91,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'username': _nameController.text,
         'email': _emailController.text,
         'phone': _phoneController.text,
-        'image_base64': _imageBase64,  // Menyimpan foto profil dalam Base64 ke Firestore
+        'image_base64': _imageBase64, // Save the profile image as Base64 in Firestore
       });
 
       setState(() {
@@ -106,34 +106,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-  // Fungsi untuk membatalkan perubahan (kembalikan gambar awal)
+  // Function to cancel the changes (restore the original image)
   void _cancelEdit() {
     setState(() {
       _isEditing = false;
-      _imageBase64 = _originalImageBase64;  // Mengembalikan gambar ke gambar awal
-      _imageFile = null;  // Menghapus gambar sementara jika dibatalkan
+      _imageBase64 = _originalImageBase64; // Restore the original image
+      _imageFile = null; // Remove the temporary image if canceled
     });
   }
 
   Widget _buildProfileImage(String? imageBase64) {
     if (_imageFile != null) {
-      return Image.file(_imageFile!, fit: BoxFit.cover, width: 120, height: 120); // Menampilkan gambar yang dipilih
+      return Image.file(_imageFile!, fit: BoxFit.cover, width: 120, height: 120); // Show selected image
     } else if (imageBase64 != null && imageBase64.isNotEmpty) {
-      return Image.memory(base64Decode(imageBase64), fit: BoxFit.cover, width: 120, height: 120); // Gambar dari Firebase
+      return Image.memory(base64Decode(imageBase64), fit: BoxFit.cover, width: 120, height: 120); // Image from Firebase
     } else {
       return Icon(Icons.person, size: 60, color: Colors.grey[400]);
     }
   }
 
-  // Fungsi untuk logout
+  // Logout function
   Future<void> _logout() async {
     try {
-      await FirebaseAuth.instance.signOut();  // Melakukan logout dari Firebase
-      // Mengarahkan pengguna ke halaman login
+      await FirebaseAuth.instance.signOut(); // Logout from Firebase
+      // Navigate the user to the login screen
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => LoginScreen()), // Arahkan langsung ke LoginScreen
-        (Route<dynamic> route) => false,  // Hapus semua rute sebelumnya
+        MaterialPageRoute(builder: (context) => LoginScreen()), // Direct to LoginScreen
+        (Route<dynamic> route) => false, // Remove all previous routes
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Terjadi kesalahan saat logout')));
@@ -169,7 +169,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     size: 30,
                   ),
                   onPressed: () {
-                    // Navigasi ke halaman notifikasi jika diperlukan
+                    // Navigate to notifications page if needed
                   },
                 ),
               ],
@@ -216,7 +216,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         radius: 60,
                         backgroundColor: Colors.green,
                         child: ClipOval(
-                          child: _buildProfileImage(imageBase64),  // Menampilkan gambar profil yang dipilih atau yang sudah ada
+                          child: _buildProfileImage(imageBase64), // Show selected or existing profile image
                         ),
                       ),
                     ),
@@ -256,17 +256,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: _saveProfile,
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      backgroundColor: Color(0xFF6FCF97),
+                    ),
                     child: _isLoading
                         ? CircularProgressIndicator(color: Colors.white)
-                        : Text('Simpan Perubahan'),
+                        : Text(
+                            'Simpan Perubahan',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
                   ),
                   SizedBox(height: 10),
                   ElevatedButton(
-                    onPressed: _cancelEdit,  // Fungsi untuk membatalkan perubahan
-                    child: Text('Batal'),
+                    onPressed: _cancelEdit, // Cancel edit changes
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      backgroundColor: Colors.grey[400],
+                    ),
+                    child: Text(
+                      'Batal',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ] else ...[
-                  // Tombol Edit Profil
                   ElevatedButton(
                     onPressed: () {
                       setState(() {
@@ -286,7 +305,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   SizedBox(height: 30),
-                  // Tombol Logout
                   ElevatedButton(
                     onPressed: _logout,
                     style: ElevatedButton.styleFrom(

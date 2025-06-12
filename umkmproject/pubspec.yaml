@@ -16,7 +16,7 @@ dependencies:
   image_picker: ^1.1.2
   geolocator: ^14.0.0
   permission_handler: ^12.0.0+1
-
+  shared_preferences: ^2.0.15
   flutter_map: ^8.1.1
   latlong2: ^0.9.1
   universal_io: ^2.2.2
@@ -25,16 +25,32 @@ dependencies:
   cloud_firestore: ^5.6.8
   firebase_storage: ^12.4.6
   image: ^4.5.4
-
+  animated_bottom_navigation_bar: ^1.0.1
+  flutter_native_splash: ^2.0.7
   timeago: ^3.7.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
 
+  # Menambahkan assets untuk aplikasi
   assets:
-  - assets/images/logoumkm.png
+    - assets/images/logoumkm.png
+
+flutter_native_splash:
+  image: assets/images/logoumkm.png  # Gambar splash screen
+  color: "#ffffff"  # Warna latar belakang splash screen
+  android: true  # Aktifkan untuk Android
+  ios: true  # Aktifkan untuk iOS
+  web: true  # Aktifkan untuk Web
+  fullscreen: true  # Aktifkan mode layar penuh
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/logoumkm.png"  # Path ke gambar logo aplikasi Anda
