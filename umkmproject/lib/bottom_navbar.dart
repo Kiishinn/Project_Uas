@@ -57,7 +57,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
             label: _labels[2], // Label di bawah ikon
           ),
         ],
-        backgroundColor: Colors.white,  // Warna background navbar
+        backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.black : Colors.white, // Background color based on the theme
         selectedItemColor: Color(0xFF6FCF97),  // Warna ikon yang dipilih
         unselectedItemColor: Colors.grey[600],  // Warna ikon yang tidak dipilih
         type: BottomNavigationBarType.fixed,  // Layout tetap, bukan yang shifting

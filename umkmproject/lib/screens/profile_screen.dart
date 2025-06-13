@@ -6,7 +6,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
+import 'package:provider/provider.dart';
 import 'package:umkmproject/screens/login_screen.dart';
+import 'package:umkmproject/theme_provider.dart';  // Import ThemeProvider
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -140,12 +142,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  // Function to toggle the theme
+  void _toggleTheme(ThemeProvider themeProvider) {
+    themeProvider.toggleTheme();
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
+    final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.black : Colors.white, // Background color based on the theme
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(60),
         child: SafeArea(
@@ -165,7 +173,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 IconButton(
                   icon: Icon(
                     Icons.notifications_none,
-                    color: Colors.black,
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black, // Background color based on the theme
                     size: 30,
                   ),
                   onPressed: () {
@@ -261,7 +269,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
-                      backgroundColor: Color(0xFF6FCF97),
+                      backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.green : Color(0xFF6FCF97), // Background color based on the theme
                     ),
                     child: _isLoading
                         ? CircularProgressIndicator(color: Colors.white)
@@ -278,7 +286,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
-                      backgroundColor: Colors.grey[400],
+                      backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[50] : Colors.grey, // Background color based on the theme
                     ),
                     child: Text(
                       'Batal',
@@ -303,6 +311,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       'Edit Profil',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                     ),
+                  ),
+                  SizedBox(height: 20),
+                  // Add Toggle for Dark Mode
+                  SwitchListTile(
+                    title: Text('Dark Mode'),
+                    value: themeProvider.isDarkMode,
+                    onChanged: (bool value) {
+                      _toggleTheme(themeProvider); // Toggle theme on switch change
+                    },
                   ),
                   SizedBox(height: 30),
                   ElevatedButton(

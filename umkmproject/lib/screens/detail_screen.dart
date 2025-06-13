@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:umkmproject/screens/editpost_screen.dart';
 
 class DetailScreen extends StatefulWidget {
   final DocumentSnapshot document;
@@ -58,32 +59,39 @@ class _DetailScreenState extends State<DetailScreen> {
     List favoriteBy = data?['favoriteBy'] ?? [];
 
     if (isFavorite) {
+      // If the UMKM is already in the user's favorites, remove it
       favoriteBy.remove(userId);
+
+      // Remove the UMKM from the user's favorite collection
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('favorites')
+          .where('umkmId', isEqualTo: widget.document.id)
+          .get()
+          .then((snapshot) {
+        for (var doc in snapshot.docs) {
+          doc.reference.delete();
+        }
+      });
     } else {
+      // If the UMKM is not in the user's favorites, add it
       favoriteBy.add(userId);
-    }
 
-    await docRef.update({'favoriteBy': favoriteBy, 'favoriteCount': favoriteBy.length});
-
-    if (!isFavorite) {
+      // Add the UMKM to the user's favorite collection
       await FirebaseFirestore.instance.collection('users').doc(userId).collection('favorites').add({
         'umkmId': widget.document.id,
         'name': widget.document['name'],
         'jenis_usaha': widget.document['jenis_usaha'],
         'image_base64': widget.document['image_base64'],
       });
-    } else {
-      final favoritesSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection('favorites')
-          .where('umkmId', isEqualTo: widget.document.id)
-          .get();
-
-      for (var doc in favoritesSnapshot.docs) {
-        await doc.reference.delete();
-      }
     }
+
+    // Update the UMKM document with the new favorite list and count
+    await docRef.update({
+      'favoriteBy': favoriteBy,
+      'favoriteCount': favoriteBy.length,
+    });
 
     setState(() {
       isFavorite = !isFavorite;
@@ -169,12 +177,26 @@ class _DetailScreenState extends State<DetailScreen> {
     final mainComments = comments.where((c) => c['parentId'] == null).toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.black45 : Colors.white, 
       appBar: AppBar(
         title: Text('Detail UMKM', style: TextStyle(color: Color(0xFF6FCF97))),
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.black45 : Colors.white,
         elevation: 0,
-        iconTheme: IconThemeData(color: Colors.black87),
+        iconTheme: IconThemeData(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
+        actions: [
+          if (FirebaseAuth.instance.currentUser?.uid == widget.document['uid'])
+            IconButton(
+              icon: Icon(Icons.edit),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EditPostScreen(document: widget.document),
+                  ),
+                );
+              },
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
@@ -196,7 +218,7 @@ class _DetailScreenState extends State<DetailScreen> {
             SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.location_on, color: Colors.grey),
+                Icon(Icons.location_on, color: Colors.green),
                 SizedBox(width: 6),
                 Flexible(
                   child: Text(
@@ -242,7 +264,7 @@ class _DetailScreenState extends State<DetailScreen> {
                       padding: EdgeInsets.all(12),
                       margin: EdgeInsets.only(bottom: 8),
                       decoration: BoxDecoration(
-                        color: Colors.grey[100], // Light gray background
+                        color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : Colors.grey[100],
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -251,7 +273,7 @@ class _DetailScreenState extends State<DetailScreen> {
                           CircleAvatar(
                             radius: 20,
                             child: Icon(Icons.person, color: Colors.white),
-                            backgroundColor: Colors.grey[500], // Gray color for avatar
+                            backgroundColor: Colors.grey[500],
                           ),
                           SizedBox(width: 12),
                           Expanded(
@@ -279,7 +301,6 @@ class _DetailScreenState extends State<DetailScreen> {
                         ],
                       ),
                     ),
-                    // Tanda balasan
                     if (isReplying && replyingTo == comment['id'])
                       Padding(
                         padding: const EdgeInsets.only(left: 50.0),
@@ -288,7 +309,6 @@ class _DetailScreenState extends State<DetailScreen> {
                           style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey[600]),
                         ),
                       ),
-                    // Balasan Komentar
                     if (isReplying && replyingTo == comment['id'])
                       Padding(
                         padding: const EdgeInsets.only(left: 50.0),
@@ -333,7 +353,7 @@ class _DetailScreenState extends State<DetailScreen> {
                             padding: EdgeInsets.all(12),
                             margin: EdgeInsets.only(bottom: 8),
                             decoration: BoxDecoration(
-                              color: Colors.grey[200], // Lighter background for replies
+                              color: Theme.of(context).brightness == Brightness.dark ? Colors.blueGrey[900] : Colors.grey[200],
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(

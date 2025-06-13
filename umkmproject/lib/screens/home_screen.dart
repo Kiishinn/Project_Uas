@@ -28,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.black45 : Colors.white, // Background color based on the theme
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(60),
         child: SafeArea(
@@ -48,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 IconButton(
                   icon: Icon(
                     Icons.notifications_none,
-                    color: Colors.black87,
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black, // Background color based on the theme
                     size: 30,
                   ),
                   onPressed: () {
@@ -67,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
             // 🔍 Search Field
             Container(
               decoration: BoxDecoration(
-                color: Colors.grey[100],
+                color: Theme.of(context).brightness == Brightness.dark ? Colors.black87 : Colors.grey[100], // Background color based on the theme
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.grey.shade300),
               ),
@@ -137,7 +137,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         },
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).brightness == Brightness.dark ? Colors.black : Colors.white, // Background color based on the theme
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
@@ -181,7 +181,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16,
-                                        color: Colors.black87,
+                                        color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black, // Background color based on the theme
                                       ),
                                     ),
                                     SizedBox(height: 4),
@@ -189,7 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       jenisUsaha,
                                       style: TextStyle(
                                         fontSize: 12,
-                                        color: Colors.black87,
+                                        color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black, // Background color based on the theme
                                       ),
                                     ),
                                     SizedBox(height: 4),

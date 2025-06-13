@@ -311,7 +311,7 @@ class _PostingScreenState extends State<PostingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.black45 : Colors.white, // Background color based on the theme
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(60),
         child: SafeArea(
@@ -323,10 +323,10 @@ class _PostingScreenState extends State<PostingScreen> {
                 IconButton(
                   icon: Icon(
                     Icons.arrow_back,
-                    color: Colors.black87,
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black, // Background color based on the theme
                   ),
                   onPressed: () {
-                    Navigator.pushReplacementNamed(context, '/HomeScreen');
+                    Navigator.pop(context);
                   },
                 ),
                 Text(
@@ -340,7 +340,7 @@ class _PostingScreenState extends State<PostingScreen> {
                 IconButton(
                   icon: Icon(
                     Icons.notifications_none,
-                    color: Colors.black87,
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black, // Background color based on the theme
                     size: 30,
                   ),
                   onPressed: () {},
@@ -419,7 +419,7 @@ class _PostingScreenState extends State<PostingScreen> {
                         horizontal: 16,
                         vertical: 12,
                       ),
-                      backgroundColor: Colors.white,
+                      backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[350], // Background color based on the theme
                     ),
                   ),
                 ],
