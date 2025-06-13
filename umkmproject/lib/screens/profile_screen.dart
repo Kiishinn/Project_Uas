@@ -108,12 +108,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-  // Function to cancel the changes (restore the original image)
+  
   void _cancelEdit() {
     setState(() {
       _isEditing = false;
-      _imageBase64 = _originalImageBase64; // Restore the original image
-      _imageFile = null; // Remove the temporary image if canceled
+      _imageBase64 = _originalImageBase64; 
+      _imageFile = null; 
     });
   }
 
@@ -130,12 +130,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Logout function
   Future<void> _logout() async {
     try {
-      await FirebaseAuth.instance.signOut(); // Logout from Firebase
-      // Navigate the user to the login screen
+      await FirebaseAuth.instance.signOut(); 
+      
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => LoginScreen()), // Direct to LoginScreen
-        (Route<dynamic> route) => false, // Remove all previous routes
+        MaterialPageRoute(builder: (context) => LoginScreen()), 
+        (Route<dynamic> route) => false, 
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Terjadi kesalahan saat logout')));
@@ -172,12 +172,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 IconButton(
                   icon: Icon(
-                    Icons.notifications_none,
-                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black, // Background color based on the theme
+                    themeProvider.isDarkMode
+                        ? Icons.nightlight_round // Moon icon for dark mode
+                        : Icons.wb_sunny, // Sun icon for light mode
+                        
+                    color: themeProvider.isDarkMode ? Colors.white : Colors.yellow[900],
                     size: 30,
                   ),
                   onPressed: () {
-                    // Navigate to notifications page if needed
+                    _toggleTheme(themeProvider); // Toggle dark/light mode
                   },
                 ),
               ],
@@ -206,10 +209,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           final phone = userData['phone'] ?? '';
           final imageBase64 = userData['image_base64'] ?? '';
 
-          _nameController.text = username;
-          _emailController.text = email;
-          _phoneController.text = phone;
-
           return SingleChildScrollView(
             padding: EdgeInsets.all(16),
             child: Column(
@@ -224,7 +223,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         radius: 60,
                         backgroundColor: Colors.green,
                         child: ClipOval(
-                          child: _buildProfileImage(imageBase64), // Show selected or existing profile image
+                          child: _buildProfileImage(imageBase64), 
                         ),
                       ),
                     ),
@@ -269,14 +268,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
-                      backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.green : Color(0xFF6FCF97), // Background color based on the theme
+                      backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.green : Color(0xFF6FCF97),
                     ),
                     child: _isLoading
                         ? CircularProgressIndicator(color: Colors.white)
-                        : Text(
-                            'Simpan Perubahan',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
+                        : Text('Simpan Perubahan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                   SizedBox(height: 10),
                   ElevatedButton(
@@ -286,12 +282,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
-                      backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[50] : Colors.grey, // Background color based on the theme
+                      backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[50] : Colors.grey,
                     ),
-                    child: Text(
-                      'Batal',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
+                    child: Text('Batal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                 ] else ...[
                   ElevatedButton(
@@ -307,21 +300,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         borderRadius: BorderRadius.circular(25),
                       ),
                     ),
-                    child: Text(
-                      'Edit Profil',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                    ),
+                    child: Text('Edit Profil', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                   ),
                   SizedBox(height: 20),
-                  // Add Toggle for Dark Mode
-                  SwitchListTile(
-                    title: Text('Dark Mode'),
-                    value: themeProvider.isDarkMode,
-                    onChanged: (bool value) {
-                      _toggleTheme(themeProvider); // Toggle theme on switch change
-                    },
-                  ),
-                  SizedBox(height: 30),
                   ElevatedButton(
                     onPressed: _logout,
                     style: ElevatedButton.styleFrom(
@@ -331,10 +312,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         borderRadius: BorderRadius.circular(25),
                       ),
                     ),
-                    child: Text(
-                      'Logout',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                    ),
+                    child: Text('Logout', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                   ),
                 ],
               ],

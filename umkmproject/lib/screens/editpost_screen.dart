@@ -4,8 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:umkmproject/bottom_navbar.dart'; // Pastikan path sesuai dengan file Anda
-import 'package:umkmproject/screens/home_screen.dart'; // Pastikan path sesuai dengan file Anda
+import 'package:umkmproject/bottom_navbar.dart'; 
+import 'package:umkmproject/screens/home_screen.dart'; 
 
 class EditPostScreen extends StatefulWidget {
   final DocumentSnapshot document;
@@ -77,7 +77,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
     Navigator.pushAndRemoveUntil(
     context,
     MaterialPageRoute(builder: (context) => BottomNavBar()),
-    ModalRoute.withName('/HomeScreen'),  // Menjamin HomeScreen tetap berada di BottomNavBar
+    ModalRoute.withName('/HomeScreen'), 
   );
   }
 

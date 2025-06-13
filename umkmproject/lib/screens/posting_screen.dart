@@ -25,7 +25,7 @@ class _PostingScreenState extends State<PostingScreen> {
   double _imageWidth = double.infinity;
 
   String name = '';
-  String jenisUsaha = '';  // Jenis usaha yang akan dipilih
+  String jenisUsaha = '';  
   String tahunBerdiri = '';
   String deskripsi = '';
   String selectedTimeUnit = 'Tahun';
@@ -33,6 +33,7 @@ class _PostingScreenState extends State<PostingScreen> {
   LatLng? selectedLocation;
   LatLng defaultLocation = LatLng(-2.990934, 104.756554);
   String? selectedAddress;
+  bool _isManualLocation = false;  // Flag for manual location input
 
   final List<String> timeUnits = ['Hari', 'Minggu', 'Bulan', 'Tahun'];
   final List<String> jenisUsahaOptions = [
@@ -44,7 +45,9 @@ class _PostingScreenState extends State<PostingScreen> {
     'Lainnya',
   ];
 
-  bool _isLoading = false;  // Menambahkan indikator loading
+  bool _isLoading = false;  
+
+  TextEditingController _manualLocationController = TextEditingController();
 
   @override
   void initState() {
@@ -95,7 +98,9 @@ class _PostingScreenState extends State<PostingScreen> {
       print('Izin lokasi ditolak permanen');
       return;
     }
-    _getCurrentLocation();
+    if (!_isManualLocation) {  // Only get current location if not using manual input
+      _getCurrentLocation();
+    }
   }
 
   Future<void> _updateAddress(LatLng position) async {
@@ -121,6 +126,22 @@ class _PostingScreenState extends State<PostingScreen> {
       setState(() {
         selectedAddress = 'Gagal mendapatkan alamat';
       });
+    }
+  }
+
+  Future<void> _searchLocationByAddress(String address) async {
+    try {
+      List<Location> locations = await locationFromAddress(address);
+      if (locations.isNotEmpty) {
+        setState(() {
+          selectedLocation = LatLng(locations[0].latitude, locations[0].longitude);
+        });
+        await _updateAddress(selectedLocation!);
+      } else {
+        print("Alamat tidak ditemukan");
+      }
+    } catch (e) {
+      print("Error geocoding address: $e");
     }
   }
 
@@ -155,12 +176,12 @@ class _PostingScreenState extends State<PostingScreen> {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     await FirebaseFirestore.instance.collection('umkms').add({
       'name': name,
-      'jenis_usaha': jenisUsaha,  // Menambahkan jenis usaha
+      'jenis_usaha': jenisUsaha,  
       'tahun_berdiri': tahunBerdiri,
       'deskripsi': deskripsi,
       'latitude': selectedLocation?.latitude,
       'longitude': selectedLocation?.longitude,
-      'alamat': selectedAddress,
+      'alamat': selectedAddress ?? _manualLocationController.text,
       'image_base64': imageBase64,
       'uid': userId,
       'created_at': FieldValue.serverTimestamp(),
@@ -178,10 +199,13 @@ class _PostingScreenState extends State<PostingScreen> {
       _pickedImage = null;
       _imageFile = null;
       name = '';
-      jenisUsaha = '';  // Reset jenisUsaha
+      jenisUsaha = '';  
       tahunBerdiri = '';
       deskripsi = '';
       selectedTimeUnit = 'Tahun';
+      selectedAddress = null;
+      _manualLocationController.clear();
+      _isManualLocation = false;  // Reset manual location flag
     });
   }
 
@@ -280,11 +304,13 @@ class _PostingScreenState extends State<PostingScreen> {
           initialCenter: mapCenter,
           initialZoom: 15,
           onTap: (tapPos, latlng) async {
-            setState(() {
-              selectedLocation = latlng;
-              selectedAddress = null;
-            });
-            await _updateAddress(latlng);
+            if (!_isManualLocation) {  // Disable map and current location if manual location is selected
+              setState(() {
+                selectedLocation = latlng;
+                selectedAddress = null;
+              });
+              await _updateAddress(latlng);
+            }
           },
         ),
         children: [
@@ -311,7 +337,7 @@ class _PostingScreenState extends State<PostingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.black45 : Colors.white, // Background color based on the theme
+      backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.black45 : Colors.white,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(60),
         child: SafeArea(
@@ -323,7 +349,7 @@ class _PostingScreenState extends State<PostingScreen> {
                 IconButton(
                   icon: Icon(
                     Icons.arrow_back,
-                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black, // Background color based on the theme
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
                   ),
                   onPressed: () {
                     Navigator.pop(context);
@@ -340,7 +366,7 @@ class _PostingScreenState extends State<PostingScreen> {
                 IconButton(
                   icon: Icon(
                     Icons.notifications_none,
-                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black, // Background color based on the theme
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
                     size: 30,
                   ),
                   onPressed: () {},
@@ -411,7 +437,12 @@ class _PostingScreenState extends State<PostingScreen> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   ElevatedButton.icon(
-                    onPressed: _getCurrentLocation,
+                    onPressed: () {
+                      setState(() {
+                        _isManualLocation = false;  // Switch to map
+                        _getCurrentLocation();
+                      });
+                    },
                     icon: Icon(Icons.my_location, color: Colors.green),
                     label: Text("Ambil Lokasi Saya"),
                     style: ElevatedButton.styleFrom(
@@ -419,13 +450,42 @@ class _PostingScreenState extends State<PostingScreen> {
                         horizontal: 16,
                         vertical: 12,
                       ),
-                      backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[350], // Background color based on the theme
+                      backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[350],
                     ),
+                  ),
+                  SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _isManualLocation = true;  // Switch to manual typing
+                        selectedLocation = null;  // Clear map location
+                        selectedAddress = null;   // Clear address
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[350],
+                    ),
+                    child: Text("Ketik Lokasi"),
                   ),
                 ],
               ),
               SizedBox(height: 10),
-              _buildFlutterMap(),
+              _isManualLocation
+                  ? TextField(
+                      controller: _manualLocationController,
+                      decoration: InputDecoration(
+                        labelText: 'Masukkan Alamat Manual',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                      ),
+                      onChanged: (val) async {
+                        if (val.trim().isNotEmpty) {
+                          await _searchLocationByAddress(val);  // Update map when typing in text field
+                        }
+                      },
+                    )
+                  : _buildFlutterMap(),
               Row(
                 children: [
                   Expanded(

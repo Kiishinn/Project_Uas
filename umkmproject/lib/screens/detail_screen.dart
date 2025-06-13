@@ -19,9 +19,9 @@ class _DetailScreenState extends State<DetailScreen> {
   List<Map<String, dynamic>> comments = [];
   bool isFavorite = false;
   int favoriteCount = 0;
-  String? replyingTo; // ID of the comment being replied to
+  String? replyingTo;
   String? username, phone;
-  bool isReplying = false; // Track if we are replying to a comment
+  bool isReplying = false;
 
   @override
   void initState() {
@@ -59,10 +59,8 @@ class _DetailScreenState extends State<DetailScreen> {
     List favoriteBy = data?['favoriteBy'] ?? [];
 
     if (isFavorite) {
-      // If the UMKM is already in the user's favorites, remove it
       favoriteBy.remove(userId);
 
-      // Remove the UMKM from the user's favorite collection
       await FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
@@ -75,10 +73,8 @@ class _DetailScreenState extends State<DetailScreen> {
         }
       });
     } else {
-      // If the UMKM is not in the user's favorites, add it
       favoriteBy.add(userId);
 
-      // Add the UMKM to the user's favorite collection
       await FirebaseFirestore.instance.collection('users').doc(userId).collection('favorites').add({
         'umkmId': widget.document.id,
         'name': widget.document['name'],
@@ -87,7 +83,6 @@ class _DetailScreenState extends State<DetailScreen> {
       });
     }
 
-    // Update the UMKM document with the new favorite list and count
     await docRef.update({
       'favoriteBy': favoriteBy,
       'favoriteCount': favoriteBy.length,
@@ -166,6 +161,17 @@ class _DetailScreenState extends State<DetailScreen> {
     return comments.where((c) => c['parentId'] == parentId).toList();
   }
 
+  Future<String> fetchUserProfileImage(String userId) async {
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+    final userData = userDoc.data();
+
+    if (userData != null && userData['image_base64'] != null) {
+      return userData['image_base64']; 
+    }
+
+    return ''; 
+  }
+
   @override
   Widget build(BuildContext context) {
     final data = widget.document.data() as Map<String, dynamic>;
@@ -177,7 +183,7 @@ class _DetailScreenState extends State<DetailScreen> {
     final mainComments = comments.where((c) => c['parentId'] == null).toList();
 
     return Scaffold(
-      backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.black45 : Colors.white, 
+      backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.black45 : Colors.white,
       appBar: AppBar(
         title: Text('Detail UMKM', style: TextStyle(color: Color(0xFF6FCF97))),
         backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.black45 : Colors.white,
@@ -256,133 +262,160 @@ class _DetailScreenState extends State<DetailScreen> {
               itemCount: mainComments.length,
               itemBuilder: (context, index) {
                 final comment = mainComments[index];
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Komentar Utama
-                    Container(
-                      padding: EdgeInsets.all(12),
-                      margin: EdgeInsets.only(bottom: 8),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : Colors.grey[100],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CircleAvatar(
-                            radius: 20,
-                            child: Icon(Icons.person, color: Colors.white),
-                            backgroundColor: Colors.grey[500],
+                return FutureBuilder<String>(
+                  future: fetchUserProfileImage(comment['userId']),
+                  builder: (context, snapshot) {
+                    String profileImageBase64 = '';
+
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      profileImageBase64 = ''; 
+                    } else if (snapshot.hasData) {
+                      profileImageBase64 = snapshot.data ?? ''; 
+                    }
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(12),
+                          margin: EdgeInsets.only(bottom: 8),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Colors.grey[850]
+                                : Colors.grey[100],
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  comment['username'] ?? 'User',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                SizedBox(height: 4),
-                                Text(comment['text'] ?? '', style: TextStyle(fontSize: 14)),
-                              ],
-                            ),
-                          ),
-                          IconButton(
-                            icon: Icon(Icons.reply),
-                            onPressed: () {
-                              setState(() {
-                                isReplying = true;
-                                replyingTo = comment['id'];
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (isReplying && replyingTo == comment['id'])
-                      Padding(
-                        padding: const EdgeInsets.only(left: 50.0),
-                        child: Text(
-                          "Membalas: ${comment['username']}",
-                          style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey[600]),
-                        ),
-                      ),
-                    if (isReplying && replyingTo == comment['id'])
-                      Padding(
-                        padding: const EdgeInsets.only(left: 50.0),
-                        child: Column(
-                          children: [
-                            TextField(
-                              controller: commentController,
-                              decoration: InputDecoration(
-                                labelText: 'Tulis Balasan...',
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              CircleAvatar(
+                                radius: 20,
+                                backgroundImage: profileImageBase64.isNotEmpty
+                                    ? MemoryImage(base64Decode(profileImageBase64))
+                                    : AssetImage('assets/default_avatar.png') as ImageProvider,
+                                backgroundColor: Colors.grey[500],
                               ),
-                            ),
-                            Row(
-                              children: [
-                                IconButton(
-                                  icon: Icon(Icons.send),
-                                  onPressed: () {
-                                    addComment(parentId: replyingTo);
-                                  },
+                              SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(comment['username'] ?? 'User', style: TextStyle(fontWeight: FontWeight.bold)),
+                                    SizedBox(height: 4),
+                                    Text(comment['text'] ?? '', style: TextStyle(fontSize: 14)),
+                                  ],
                                 ),
-                                IconButton(
-                                  icon: Icon(Icons.cancel),
-                                  onPressed: () {
-                                    setState(() {
-                                      isReplying = false;
-                                      replyingTo = null;
-                                      commentController.clear();
-                                    });
-                                  },
-                                ),
-                              ],
-                            ),
-                          ],
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.reply),
+                                onPressed: () {
+                                  setState(() {
+                                    isReplying = true;
+                                    replyingTo = comment['id'];
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    if (!isReplying || replyingTo != comment['id'])
-                      ...getReplies(comment['id']).map((reply) {
-                        return Padding(
-                          padding: const EdgeInsets.only(left: 50.0),
-                          child: Container(
-                            padding: EdgeInsets.all(12),
-                            margin: EdgeInsets.only(bottom: 8),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).brightness == Brightness.dark ? Colors.blueGrey[900] : Colors.grey[200],
-                              borderRadius: BorderRadius.circular(12),
+                        if (isReplying && replyingTo == comment['id'])
+                          Padding(
+                            padding: const EdgeInsets.only(left: 50.0),
+                            child: Text(
+                              "Membalas: ${comment['username']}",
+                              style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey[600]),
                             ),
-                            child: Row(
+                          ),
+                        if (isReplying && replyingTo == comment['id'])
+                          Padding(
+                            padding: const EdgeInsets.only(left: 50.0),
+                            child: Column(
                               children: [
-                                CircleAvatar(
-                                  radius: 20,
-                                  child: Icon(Icons.person, color: Colors.white),
-                                  backgroundColor: Colors.grey[500],
-                                ),
-                                SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        reply['username'] ?? 'User',
-                                        style: TextStyle(fontWeight: FontWeight.bold),
-                                      ),
-                                      SizedBox(height: 4),
-                                      Text(reply['text'] ?? '', style: TextStyle(fontSize: 14)),
-                                    ],
+                                TextField(
+                                  controller: commentController,
+                                  decoration: InputDecoration(
+                                    labelText: 'Tulis Balasan...',
+                                    border: OutlineInputBorder(),
+                                    contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
                                   ),
                                 ),
+                                Row(
+                                  children: [
+                                    IconButton(
+                                      icon: Icon(Icons.send),
+                                      onPressed: () {
+                                        addComment(parentId: replyingTo);
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: Icon(Icons.cancel),
+                                      onPressed: () {
+                                        setState(() {
+                                          isReplying = false;
+                                          replyingTo = null;
+                                          commentController.clear();
+                                        });
+                                      },
+                                    ),
+                                  ],
+                                ),
                               ],
                             ),
                           ),
-                        );
-                      }).toList(),
-                  ],
+                        if (!isReplying || replyingTo != comment['id'])
+                          ...getReplies(comment['id']).map((reply) {
+                            return FutureBuilder<String>(
+                              future: fetchUserProfileImage(reply['userId']),
+                              builder: (context, replySnapshot) {
+                                String replyProfileImageBase64 = '';
+
+                                if (replySnapshot.connectionState == ConnectionState.waiting) {
+                                  replyProfileImageBase64 = ''; 
+                                } else if (replySnapshot.hasData) {
+                                  replyProfileImageBase64 = replySnapshot.data ?? ''; 
+                                }
+
+                                return Padding(
+                                  padding: const EdgeInsets.only(left: 50.0),
+                                  child: Container(
+                                    padding: EdgeInsets.all(12),
+                                    margin: EdgeInsets.only(bottom: 8),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context).brightness == Brightness.dark
+                                          ? Colors.blueGrey[900]
+                                          : Colors.grey[200],
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 20,
+                                          backgroundImage: replyProfileImageBase64.isNotEmpty
+                                              ? MemoryImage(base64Decode(replyProfileImageBase64))
+                                              : AssetImage('assets/default_avatar.png') as ImageProvider,
+                                          backgroundColor: Colors.grey[500],
+                                        ),
+                                        SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(reply['username'] ?? 'User', style: TextStyle(fontWeight: FontWeight.bold)),
+                                              SizedBox(height: 4),
+                                              Text(reply['text'] ?? '', style: TextStyle(fontSize: 14)),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          }).toList(),
+                      ],
+                    );
+                  },
                 );
               },
             ),

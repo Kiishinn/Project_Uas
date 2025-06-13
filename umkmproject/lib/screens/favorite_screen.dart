@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
-import 'detail_screen.dart';  // Pastikan DetailScreen diimport
+import 'detail_screen.dart'; 
 
 class FavoriteScreen extends StatefulWidget {
   const FavoriteScreen({super.key});
@@ -20,15 +20,15 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
     super.initState();
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId != null) {
-      // Stream data favorit pengguna
+      
       favoriteStream = FirebaseFirestore.instance
-          .collection('users') // Koleksi users
+          .collection('users') 
           .doc(userId)
-          .collection('favorites') // Koleksi favorit untuk masing-masing pengguna
+          .collection('favorites') 
           .snapshots();
     } else {
       // Jika tidak ada pengguna yang login, kita tampilkan pesan error
-      favoriteStream = Stream.empty(); // Menggunakan Stream kosong
+      favoriteStream = Stream.empty(); 
     }
   }
 
@@ -59,7 +59,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                     size: 30,
                   ),
                   onPressed: () {
-                    // Navigasi ke halaman notifikasi jika diperlukan
+                    
                   },
                 ),
               ],
@@ -118,7 +118,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                     itemCount: filteredFavorites.length,
                     itemBuilder: (context, index) {
                       final favorite = filteredFavorites[index];
-                      final umkmId = favorite['umkmId'];  // Ambil umkmId dari koleksi favorites
+                      final umkmId = favorite['umkmId'];  
                       
                       // Ambil data UMKM dari koleksi `umkms` untuk mendapatkan deskripsi
                       return FutureBuilder<DocumentSnapshot>(
@@ -147,7 +147,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                             subtitle: Text(deskripsi),
                             trailing: Icon(Icons.favorite, color: Colors.redAccent),
                             onTap: () {
-                              // Navigasi ke DetailScreen dan kirim DocumentSnapshot UMKM
+                              
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
